@@ -8,7 +8,10 @@ class Config:
     if os.environ.get('DATABASE_URL'):
         # Parse the DATABASE_URL for PostgreSQL
         url = urlparse(os.environ.get('DATABASE_URL'))
-        SQLALCHEMY_DATABASE_URI = f"postgresql://{url.username}:{url.password}@{url.hostname}:{url.port}{url.path}"
+        # Convert postgres:// to postgresql://
+        if url.scheme == 'postgres':
+            url = url._replace(scheme='postgresql')
+        SQLALCHEMY_DATABASE_URI = url.geturl()
     else:
         SQLALCHEMY_DATABASE_URI = 'sqlite:///attendance.db'
     
