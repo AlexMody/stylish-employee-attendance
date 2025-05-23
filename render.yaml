@@ -5,7 +5,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python init_db.py
-    startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    startCommand: cd /opt/render/project/src && gunicorn --bind 0.0.0.0:$PORT wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
@@ -17,6 +17,8 @@ services:
         value: INFO
       - key: PORT
         value: 10000
+      - key: PYTHONPATH
+        value: /opt/render/project/src
     autoDeploy: true
     healthCheckPath: /
     disk:
