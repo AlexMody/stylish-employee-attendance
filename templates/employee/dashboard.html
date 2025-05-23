@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="text-center py-4">
+                    <h4>Employee Portal</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('employee.employee_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('employee.record_sale') }}">
+                            <i class="bi bi-cart-plus"></i> Record Sale
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('employee.request_vacation') }}">
+                            <i class="bi bi-calendar-check"></i> Request Vacation
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1>Welcome, {{ current_user.username }}</h1>
+                        <p class="text-muted">{{ datetime.datetime.now().strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="row">
+                    <!-- Attendance Card -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-clock"></i> Attendance
+                            </h2>
+                            
+                            {% if attendance and attendance.check_out_time is none %}
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle-fill"></i> You are checked in
+                                    <p class="mb-0 mt-1">Check-in time: {{ attendance.check_in_time.strftime('%H:%M:%S') }}</p>
+                                </div>
+                                <form action="{{ url_for('employee.check_out') }}" method="post">
+                                    <button type="submit" class="btn btn-danger attendance-btn check-out-btn">
+                                        <i class="bi bi-box-arrow-right"></i> Check Out
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-circle-fill"></i> You are not checked in
+                                </div>
+                                <form action="{{ url_for('employee.check_in') }}" method="post">
+                                    <button type="submit" class="btn btn-success attendance-btn check-in-btn">
+                                        <i class="bi bi-box-arrow-in-right"></i> Check In
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            <form action="{{ url_for('employee.toggle_lead_status') }}" method="post" class="mt-3">
+                                <button type="submit" class="btn btn-warning attendance-btn need-lead-btn">
+                                    {% if current_user.needs_lead %}
+                                        <i class="bi bi-x-circle"></i> Cancel Lead Request
+                                    {% else %}
+                                        <i class="bi bi-hand-index-thumb"></i> I Need a Lead
+                                    {% endif %}
+                                </button>
+                            </form>
+                            {% if current_user.needs_lead %}
+                                <p class="text-muted mt-2">Lead requested: <span id="leadTimer"></span></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Sales Status Card -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-graph-up"></i> Sales Status
+                                {% if is_bonus_hunter %}
+                                    <span class="bonus-hunter-badge">Bonus Hunter</span>
+                                {% endif %}
+                            </h2>
+                            
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ (monthly_sales_count / 5) * 100 if monthly_sales_count < 5 else 100 }}%;" 
+                                     aria-valuenow="{{ monthly_sales_count }}" aria-valuemin="0" aria-valuemax="5">
+                                    {{ monthly_sales_count }} / 5 Sales
+                                </div>
+                            </div>
+                            
+                            <p>You have made <strong>{{ monthly_sales_count }}</strong> sales this month.</p>
+                            {% if monthly_sales_count >= 5 %}
+                                <div class="alert alert-success">
+                                    <i class="bi bi-trophy"></i> Congratulations! You've reached the monthly bonus target!
+                                </div>
+                            {% else %}
+                                <p>You need <strong>{{ 5 - monthly_sales_count }}</strong> more sales to reach the monthly bonus.</p>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('employee.record_sale') }}" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-circle"></i> Record New Sale
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Sales Card -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-receipt"></i> Recent Sales
+                            </h2>
+                            
+                            {% if recent_sales %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Customer</th>
+                                                <th>Amount</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for sale in recent_sales %}
+                                                <tr>
+                                                    <td>{{ sale.customer_name }}</td>
+                                                    <td>${{ "%.2f"|format(sale.amount) }}</td>
+                                                    <td>{{ sale.created_at.strftime('%m/%d/%Y') }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p>No recent sales found.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Vacation Requests Card -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-calendar-week"></i> Vacation Requests
+                            </h2>
+                            
+                            {% if pending_vacations %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Start Date</th>
+                                                <th>End Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for vacation in pending_vacations %}
+                                                <tr>
+                                                    <td>{{ vacation.start_date.strftime('%m/%d/%Y') }}</td>
+                                                    <td>{{ vacation.end_date.strftime('%m/%d/%Y') }}</td>
+                                                    <td>
+                                                        <span class="badge bg-warning">{{ vacation.status }}</span>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p>No pending vacation requests.</p>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('employee.request_vacation') }}" class="btn btn-primary mt-2">
+                                <i class="bi bi-plus-circle"></i> Request Vacation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sale Celebration Modal (Hidden by default) -->
+    <div class="celebration-container" id="celebrationModal" style="display: none;">
+        <div class="celebration-content">
+            <h2 class="celebration-title">🎉 New Sale! 🎉</h2>
+            <p class="celebration-message">Congratulations to</p>
+            <h3 class="celebration-name" id="celebrationName"></h3>
+            <p class="celebration-message">for making a new sale!</p>
+            <button class="btn btn-light btn-lg mt-3" onclick="closeCelebration()">Continue</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to create fireworks
+        function createFirework() {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            
+            // Random position
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            
+            // Random color
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+            firework.style.backgroundColor = color;
+            
+            document.body.appendChild(firework);
+            
+            // Remove firework after animation completes
+            setTimeout(() => {
+                firework.remove();
+            }, 1000);
+        }
+        
+        // Function to show celebration
+        function showCelebration(name) {
+            document.getElementById('celebrationName').textContent = name;
+            document.getElementById('celebrationModal').style.display = 'flex';
+            
+            // Create fireworks
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    createFirework();
+                }, i * 100);
+            }
+        }
+        
+        // Function to close celebration
+        function closeCelebration() {
+            document.getElementById('celebrationModal').style.display = 'none';
+        }
+        
+        // Check for celebration parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('celebrate')) {
+            const name = urlParams.get('name');
+            showCelebration(name || 'Someone');
+        }
+        
+        // Timer for 'I Need a Lead' button
+        const leadTimerElement = document.getElementById('leadTimer');
+        const leadRequestedAt = '{{ current_user.lead_requested_at | default(None) }}';
+        
+        function updateLeadTimer() {
+            if (leadTimerElement && leadRequestedAt !== 'None') {
+                const now = new Date();
+                const requestedTime = new Date(leadRequestedAt);
+                const elapsedMilliseconds = now - requestedTime;
+                const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+                
+                const hours = Math.floor(elapsedSeconds / 3600);
+                const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+                const seconds = elapsedSeconds % 60;
+                
+                const formattedTime = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                leadTimerElement.textContent = formattedTime;
+            } else if (leadTimerElement) {
+                leadTimerElement.textContent = ''; // Clear timer if no lead is requested
+            }
+        }
+        
+        // Update timer every second if a lead is requested
+        if (leadRequestedAt !== 'None') {
+            setInterval(updateLeadTimer, 1000);
+        }
+        
+        // Initial call to display timer immediately if needed
+        updateLeadTimer();
+    </script>
+</body>
+</html>

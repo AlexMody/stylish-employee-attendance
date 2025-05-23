@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <div class="sidebar-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.live_attendance') }}">
+                            <i class="fas fa-clock"></i> Live Monitoring
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.employees') }}">
+                            <i class="fas fa-users"></i> Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.attendance_report') }}">
+                            <i class="fas fa-calendar-check"></i> Attendance Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.sales_report') }}">
+                            <i class="fas fa-chart-line"></i> Sales Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.vacation_requests') }}">
+                            <i class="fas fa-umbrella-beach"></i> Vacation Requests
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <h1 class="h2">Live Employee Monitoring</h1>
+                    <p class="text-muted">{{ datetime.datetime.now().strftime('%A, %B %d, %Y') }}</p>
+                </div>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <button id="refreshBtn" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-sync-alt"></i> Refresh Data
+                    </button>
+                </div>
+            </div>
+
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle"></i> This page automatically updates every 30 seconds. Last updated: <span id="lastUpdated">-</span>
+            </div>
+
+            <div class="row">
+                <!-- Active Employees -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-broadcast-tower"></i> Active Employees
+                                <span class="badge badge-primary ms-2" id="activeCount">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="activeEmployees">
+                                <!-- Employee cards will be loaded here -->
+                                <div class="col-12 text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Stats -->
+                <div class="col-md-4">
+                    <!-- Need Leads -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-hand-point-up"></i> Need Leads
+                                <span class="badge badge-warning ms-2" id="needLeadsCount">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group" id="needLeadsList">
+                                <!-- Data will be loaded dynamically -->
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Stats -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock"></i> Today's Stats
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 id="totalCheckIns">0</h3>
+                                            <p class="mb-0">Check-ins</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 id="totalCheckOuts">0</h3>
+                                            <p class="mb-0">Check-outs</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 id="avgDuration">0.0</h3>
+                                            <p class="mb-0">Avg. Hours</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sales Overview -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line"></i> Sales Overview
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group" id="salesOverview">
+                                <!-- Data will be loaded dynamically -->
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function formatTime(timeStr) {
+    if (!timeStr) return '-';
+    const [hours, minutes] = timeStr.split(':');
+    return `${hours}:${minutes}`;
+}
+
+function formatDuration(duration) {
+    if (!duration) return '-';
+    return `${duration.toFixed(1)}h`;
+}
+
+function updateLastUpdated() {
+    const now = new Date();
+    document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
+}
+
+function loadAttendanceData() {
+    fetch('/admin/api/live-attendance')
+        .then(response => response.json())
+        .then(data => {
+            // Update stats
+            document.getElementById('activeCount').textContent = data.stats.active_count;
+            document.getElementById('needLeadsCount').textContent = data.stats.need_leads_count;
+            document.getElementById('totalCheckIns').textContent = data.stats.total_check_ins;
+            document.getElementById('totalCheckOuts').textContent = data.stats.total_check_outs;
+            document.getElementById('avgDuration').textContent = data.stats.avg_duration.toFixed(1);
+
+            // Update active employees
+            const activeEmployeesContainer = document.getElementById('activeEmployees');
+            activeEmployeesContainer.innerHTML = '';
+
+            data.attendance.forEach(employee => {
+                if (employee.is_active) {
+                    const card = document.createElement('div');
+                    card.className = 'col-md-6 mb-3';
+                    card.innerHTML = `
+                        <div class="card employee-card">
+                            <div class="card-body">
+                                <h5 class="card-title">${employee.username}</h5>
+                                <p class="card-text">
+                                    <small class="text-muted">Check-in: ${formatTime(employee.check_in_time)}</small>
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge badge-success">Active</span>
+                                    ${employee.today_sales > 0 ? `<span class="badge badge-info">${employee.today_sales} Sales Today</span>` : ''}
+                                    ${employee.is_bonus_hunter ? '<span class="badge badge-warning">Bonus Hunter</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    activeEmployeesContainer.appendChild(card);
+                }
+            });
+
+            // Update need leads list
+            const needLeadsList = document.getElementById('needLeadsList');
+            needLeadsList.innerHTML = '';
+
+            data.attendance.forEach(employee => {
+                if (employee.needs_lead) {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${employee.username}</h6>
+                                <small class="text-muted">Active since ${formatTime(employee.check_in_time)}</small>
+                            </div>
+                            <span class="badge badge-warning">Needs Lead</span>
+                        </div>
+                    `;
+                    needLeadsList.appendChild(item);
+                }
+            });
+
+            // Update sales overview
+            const salesOverview = document.getElementById('salesOverview');
+            salesOverview.innerHTML = '';
+
+            data.attendance.forEach(employee => {
+                if (employee.today_sales > 0) {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${employee.username}</h6>
+                                <small class="text-muted">${employee.today_sales} sales today</small>
+                            </div>
+                            <div>
+                                ${employee.is_bonus_hunter ? '<span class="badge badge-warning">Bonus Hunter</span>' : ''}
+                                <span class="badge badge-info">${employee.monthly_sales} this month</span>
+                            </div>
+                        </div>
+                    `;
+                    salesOverview.appendChild(item);
+                }
+            });
+
+            updateLastUpdated();
+        })
+        .catch(error => {
+            console.error('Error loading attendance data:', error);
+        });
+}
+
+// Load data initially
+loadAttendanceData();
+
+// Set up auto-refresh
+setInterval(loadAttendanceData, 300000);
+
+// Manual refresh button
+document.getElementById('refreshBtn').addEventListener('click', loadAttendanceData);
+</script>
+{% endblock %}
+{% endblock %}

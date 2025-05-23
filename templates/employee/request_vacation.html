@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Vacation - Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="text-center py-4">
+                    <h4>Employee Portal</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('employee.employee_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('employee.record_sale') }}">
+                            <i class="bi bi-cart-plus"></i> Record Sale
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('employee.request_vacation') }}">
+                            <i class="bi bi-calendar-check"></i> Request Vacation
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1>Request Vacation</h1>
+                        <p class="text-muted">{{ datetime.datetime.now().strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="row">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-calendar-plus"></i> Vacation Request Form
+                            </h2>
+                            
+                            <form action="{{ url_for('employee.request_vacation') }}" method="post">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="reason" class="form-label">Reason (Optional)</label>
+                                    <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-check-circle"></i> Submit Request
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 col-lg-6">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-info-circle"></i> Vacation Policy
+                            </h2>
+                            
+                            <div class="alert alert-info">
+                                <h5><i class="bi bi-calendar-check"></i> Request Process</h5>
+                                <p>All vacation requests must be approved by management before they are considered valid.</p>
+                            </div>
+                            
+                            <h5>Guidelines:</h5>
+                            <ul>
+                                <li>Submit requests at least 2 weeks in advance when possible</li>
+                                <li>Specify accurate start and end dates</li>
+                                <li>Provide a reason for extended absences</li>
+                                <li>Check your request status on the dashboard</li>
+                            </ul>
+                            
+                            <h5 class="mt-4">Your Pending Requests:</h5>
+                            {% if pending_vacations %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Start Date</th>
+                                                <th>End Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for vacation in pending_vacations %}
+                                                <tr>
+                                                    <td>{{ vacation.start_date.strftime('%m/%d/%Y') }}</td>
+                                                    <td>{{ vacation.end_date.strftime('%m/%d/%Y') }}</td>
+                                                    <td>
+                                                        <span class="badge bg-warning">{{ vacation.status }}</span>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p>No pending vacation requests.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set minimum date for date inputs to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('start_date').min = today;
+            document.getElementById('end_date').min = today;
+            
+            // Ensure end date is after start date
+            document.getElementById('start_date').addEventListener('change', function() {
+                document.getElementById('end_date').min = this.value;
+                
+                // If end date is before start date, update it
+                if (document.getElementById('end_date').value < this.value) {
+                    document.getElementById('end_date').value = this.value;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

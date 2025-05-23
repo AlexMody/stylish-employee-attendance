@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vacation Requests - Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="text-center py-4">
+                    <h4>Admin Portal</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.employees') }}">
+                            <i class="bi bi-people"></i> Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.attendance_report') }}">
+                            <i class="bi bi-clock-history"></i> Attendance Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.sales_report') }}">
+                            <i class="bi bi-graph-up"></i> Sales Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.vacation_requests') }}">
+                            <i class="bi bi-calendar-check"></i> Vacation Requests
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.live_attendance') }}">
+                            <i class="bi bi-broadcast"></i> Live Attendance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1>Vacation Requests</h1>
+                        <p class="text-muted">{{ datetime.datetime.now().strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-calendar-check"></i> All Vacation Requests
+                            </h2>
+                            
+                            <ul class="nav nav-tabs mb-4" id="vacationTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="true">
+                                        Pending <span class="badge bg-warning">{{ vacations|selectattr('status', 'equalto', 'pending')|list|length }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab" aria-controls="approved" aria-selected="false">
+                                        Approved <span class="badge bg-success">{{ vacations|selectattr('status', 'equalto', 'approved')|list|length }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">
+                                        Rejected <span class="badge bg-danger">{{ vacations|selectattr('status', 'equalto', 'rejected')|list|length }}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="false">
+                                        All <span class="badge bg-secondary">{{ vacations|length }}</span>
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content" id="vacationTabsContent">
+                                <!-- Pending Requests Tab -->
+                                <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                                    {% set pending_vacations = vacations|selectattr('status', 'equalto', 'pending')|list %}
+                                    {% if pending_vacations %}
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Employee</th>
+                                                        <th>Start Date</th>
+                                                        <th>End Date</th>
+                                                        <th>Duration</th>
+                                                        <th>Reason</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for vacation in pending_vacations %}
+                                                        {% set employee = User.query.get(vacation.user_id) %}
+                                                        <tr>
+                                                            <td>{{ employee.username if employee else 'Unknown' }}</td>
+                                                            <td>{{ vacation.start_date.strftime('%m/%d/%Y') }}</td>
+                                                            <td>{{ vacation.end_date.strftime('%m/%d/%Y') }}</td>
+                                                            <td>{{ vacation.get_duration() }} days</td>
+                                                            <td>{{ vacation.reason or 'Not provided' }}</td>
+                                                            <td>
+                                                                <div class="btn-group" role="group">
+                                                                    <form action="{{ url_for('admin.approve_vacation', vacation_id=vacation.id) }}" method="post" class="d-inline">
+                                                                        <button type="submit" class="btn btn-success btn-sm">
+                                                                            <i class="bi bi-check-circle"></i> Approve
+                                                                        </button>
+                                                                    </form>
+                                                                    <form action="{{ url_for('admin.reject_vacation', vacation_id=vacation.id) }}" method="post" class="d-inline ms-1">
+                                                                        <button type="submit" class="btn btn-danger btn-sm">
+                                                                            <i class="bi bi-x-circle"></i> Reject
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle"></i> No pending vacation requests.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Approved Requests Tab -->
+                                <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+                                    {% set approved_vacations = vacations|selectattr('status', 'equalto', 'approved')|list %}
+                                    {% if approved_vacations %}
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Employee</th>
+                                                        <th>Start Date</th>
+                                                        <th>End Date</th>
+                                                        <th>Duration</th>
+                                                        <th>Reason</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for vacation in approved_vacations %}
+                                                        {% set employee = User.query.get(vacation.user_id) %}
+                                                        <tr>
+                                                            <td>{{ employee.username if employee else 'Unknown' }}</td>
+                                                            <td>{{ vacation.start_date.strftime('%m/%d/%Y') }}</td>
+                                                            <td>{{ vacation.end_date.strftime('%m/%d/%Y') }}</td>
+                                                            <td>{{ vacation.get_duration() }} days</td>
+                                                            <td>{{ vacation.reason or 'Not provided' }}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle"></i> No approved vacation requests.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Rejected Requests Tab -->
+                                <div class="tab-pane fade" id="rejected" role="tabpanel" aria-labelledby="rejected-tab">
+                                    {% set rejected_vacations = vacations|selectattr('status', 'equalto', 'rejected')|list %}
+                                    {% if rejected_vacations %}
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Employee</th>
+                                                        <th>Start Date</th>
+                                                        <th>End Date</th>
+                                                        <th>Duration</th>
+                                                        <th>Reason</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for vacation in rejected_vacations %}
+                                                        {% set employee = User.query.get(vacation.user_id) %}
+                                                        <tr>
+                                                            <td>{{ employee.username if employee else 'Unknown' }}</td>
+                                                            <td>{{ vacation.start_date.strftime('%m/%d/%Y') }}</td>
+                                                            <td>{{ vacation.end_date.strftime('%m/%d/%Y') }}</td>
+                                                            <td>{{ vacation.get_duration() }} days</td>
+                                                            <td>{{ vacation.reason or 'Not provided' }}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle"></i> No rejected vacation requests.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- All Requests Tab -->
+                                <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+                                    {% if vacations %}
+                                        <div class="table-responsive">
+                                          
+{% endif %}

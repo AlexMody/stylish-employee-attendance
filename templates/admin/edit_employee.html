@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Employee - Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="text-center py-4">
+                    <h4>Admin Portal</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.employees') }}">
+                            <i class="bi bi-people"></i> Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.attendance_report') }}">
+                            <i class="bi bi-clock-history"></i> Attendance Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.sales_report') }}">
+                            <i class="bi bi-graph-up"></i> Sales Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.vacation_requests') }}">
+                            <i class="bi bi-calendar-check"></i> Vacation Requests
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.live_attendance') }}">
+                            <i class="bi bi-broadcast"></i> Live Attendance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h1>Edit Employee</h1>
+                        <p class="text-muted">{{ datetime.datetime.now().strftime('%A, %B %d, %Y') }}</p>
+                    </div>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="row">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-person-gear"></i> Edit Employee Information
+                            </h2>
+                            
+                            <form action="{{ url_for('admin.edit_employee', employee_id=employee.id) }}" method="post">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="{{ employee.username }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ employee.email }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">New Password (leave blank to keep current)</label>
+                                    <input type="password" class="form-control" id="password" name="password">
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-check-circle"></i> Update Employee
+                                    </button>
+                                    <a href="{{ url_for('admin.employees') }}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left"></i> Back to Employees
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 col-lg-6">
+                        <div class="dashboard-card">
+                            <h2 class="dashboard-card-title">
+                                <i class="bi bi-person-badge"></i> Employee Statistics
+                            </h2>
+                            
+                            <div class="row mb-4">
+                                <div class="col-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h3>{{ employee.get_monthly_sales_count() }}</h3>
+                                            <p class="mb-0">Sales This Month</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h3>{{ employee.attendances.count() }}</h3>
+                                            <p class="mb-0">Total Check-ins</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert {{ 'alert-warning' if employee.needs_lead else 'alert-success' }}">
+                                <h5>
+                                    <i class="bi {{ 'bi-hand-index-thumb' if employee.needs_lead else 'bi-check-circle' }}"></i> 
+                                    Lead Status
+                                </h5>
+                                <p class="mb-0">
+                                    {% if employee.needs_lead %}
+                                        This employee is currently requesting leads.
+                                    {% else %}
+                                        This employee is not requesting leads.
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            <div class="alert {{ 'alert-success' if employee.is_bonus_hunter() else 'alert-info' }}">
+                                <h5>
+                                    <i class="bi {{ 'bi-trophy' if employee.is_bonus_hunter() else 'bi-graph-up' }}"></i> 
+                                    Bonus Hunter Status
+                                </h5>
+                                <p class="mb-0">
+                                    {% if employee.is_bonus_hunter() %}
+                                        This employee has achieved Bonus Hunter status this month!
+                                    {% else %}
+                                        This employee needs {{ 5 - employee.get_monthly_sales_count() }} more sales to become a Bonus Hunter.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

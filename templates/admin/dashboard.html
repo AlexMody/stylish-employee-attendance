@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <div class="sidebar-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.live_attendance') }}">
+                            <i class="fas fa-clock"></i> Live Monitoring
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.employees') }}">
+                            <i class="fas fa-users"></i> Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.attendance_report') }}">
+                            <i class="fas fa-calendar-check"></i> Attendance Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.sales_report') }}">
+                            <i class="fas fa-chart-line"></i> Sales Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.vacation_requests') }}">
+                            <i class="fas fa-umbrella-beach"></i> Vacation Requests
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-3">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Admin Dashboard</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group mr-2">
+                        <a href="{{ url_for('admin.live_attendance') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-clock"></i> View Live Monitoring
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Employees -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Active Employees</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if active_employees %}
+                                <ul class="list-group">
+                                    {% for employee in active_employees %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ employee.username }}
+                                            <span class="badge badge-success">Active</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No active employees at the moment.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employees Needing Leads -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Employees Needing Leads</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if employees_needing_leads %}
+                                <ul class="list-group">
+                                    {% for employee in employees_needing_leads %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ employee.username }}
+                                            <span class="badge badge-warning">Needs Lead</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No employees need leads at the moment.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bonus Hunters -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Bonus Hunters This Month</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if bonus_hunters %}
+                                <ul class="list-group">
+                                    {% for employee in bonus_hunters %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ employee.username }}
+                                            <span class="badge badge-info">Bonus Hunter</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No bonus hunters this month.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Vacation Requests -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Pending Vacation Requests</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if pending_vacations %}
+                                <ul class="list-group">
+                                    {% for vacation in pending_vacations %}
+                                        <li class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ vacation.user.username }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        {{ vacation.start_date.strftime('%Y-%m-%d') }} to {{ vacation.end_date.strftime('%Y-%m-%d') }}
+                                                    </small>
+                                                </div>
+                                                <div>
+                                                    <a href="{{ url_for('admin.approve_vacation', vacation_id=vacation.id) }}" 
+                                                       class="btn btn-sm btn-success" 
+                                                       onclick="return confirm('Approve this vacation request?')">
+                                                        Approve
+                                                    </a>
+                                                    <a href="{{ url_for('admin.reject_vacation', vacation_id=vacation.id) }}" 
+                                                       class="btn btn-sm btn-danger" 
+                                                       onclick="return confirm('Reject this vacation request?')">
+                                                        Reject
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No pending vacation requests.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %} 
