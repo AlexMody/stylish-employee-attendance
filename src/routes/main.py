@@ -1,5 +1,7 @@
 import sys
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))  # Add project root to path
 
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
@@ -12,14 +14,26 @@ from src.models.user import User
 from src.models.attendance import Attendance
 from src.models.sale import Sale
 from src.models.vacation import Vacation
+from src.config import Config
 
 # Initialize Flask app
 app = Flask(__name__, 
             template_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'templates'),
             static_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'static'))
-app.config['SECRET_KEY'] = os.urandom(24)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///attendance.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Load configuration
+app.config.from_object(Config)
+
+# Set up logging
+if not app.debug:
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    file_handler = RotatingFileHandler('logs/attendance.log', maxBytes=10240, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Attendance System startup')
 
 # Initialize database with app
 db.init_app(app)
