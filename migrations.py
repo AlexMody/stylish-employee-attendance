@@ -5,6 +5,10 @@ from src.models.user import User
 import os
 import logging
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Initialize database
 init_db(app)
 
@@ -14,9 +18,13 @@ migrate = Migrate(app, db)
 def init_db():
     with app.app_context():
         try:
-            # Create tables
-            db.create_all()
-            app.logger.info("Database tables created successfully!")
+            # Check if tables exist
+            inspector = db.inspect(db.engine)
+            if not inspector.get_table_names():
+                db.create_all()
+                logger.info("Database tables created successfully!")
+            else:
+                logger.info("Database tables already exist.")
             
             # Create admin user if it doesn't exist
             admin = User.query.filter_by(username='Mody').first()
@@ -25,11 +33,11 @@ def init_db():
                 admin.set_password('Mody0325')
                 db.session.add(admin)
                 db.session.commit()
-                app.logger.info("Admin user created successfully!")
+                logger.info("Admin user created successfully!")
             else:
-                app.logger.info("Admin user already exists!")
+                logger.info("Admin user already exists!")
         except Exception as e:
-            app.logger.error(f"Error initializing database: {str(e)}")
+            logger.error(f"Error initializing database: {str(e)}")
             raise
 
 if __name__ == '__main__':

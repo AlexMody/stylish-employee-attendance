@@ -19,13 +19,18 @@ def init_db(app):
     # Initialize the database
     db.init_app(app)
     
-    # Create tables
+    # Create tables if they don't exist
     with app.app_context():
         try:
-            db.create_all()
-            app.logger.info("Database tables created successfully!")
+            # Check if tables exist
+            inspector = db.inspect(db.engine)
+            if not inspector.get_table_names():
+                db.create_all()
+                app.logger.info("Database tables created successfully!")
+            else:
+                app.logger.info("Database tables already exist.")
         except Exception as e:
-            app.logger.error(f"Error creating database tables: {str(e)}")
+            app.logger.error(f"Error initializing database: {str(e)}")
             raise
     
     return db
