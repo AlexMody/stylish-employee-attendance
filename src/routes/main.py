@@ -60,7 +60,7 @@ def not_found_error(error):
 
 # Import and register blueprints
 from src.routes.auth import bp as auth_bp
-from src.routes.main import bp as main_bp
+from src.routes.main_routes import bp as main_bp
 from src.routes.admin import bp as admin_bp
 from src.routes.employee import bp as employee_bp
 
