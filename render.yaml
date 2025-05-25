@@ -6,6 +6,7 @@ services:
       pip install -r requirements.txt
       export FLASK_APP=wsgi.py
       export PYTHONPATH=/opt/render/project/src
+      export DATABASE_URL=${DATABASE_URL}
       flask db init
       flask db migrate -m "Initial migration"
       flask db upgrade

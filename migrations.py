@@ -12,19 +12,24 @@ migrate = Migrate(app, db)
 
 def init_db():
     with app.app_context():
-        # Create tables
-        db.create_all()
-        
-        # Create admin user if it doesn't exist
-        admin = User.query.filter_by(username='Mody').first()
-        if not admin:
-            admin = User(username='Mody', email='admin@newera.com', is_admin=True)
-            admin.set_password('Mody0325')
-            db.session.add(admin)
-            db.session.commit()
-            print("Admin user created successfully!")
-        else:
-            print("Admin user already exists!")
+        try:
+            # Create tables
+            db.create_all()
+            print("Database tables created successfully!")
+            
+            # Create admin user if it doesn't exist
+            admin = User.query.filter_by(username='Mody').first()
+            if not admin:
+                admin = User(username='Mody', email='admin@newera.com', is_admin=True)
+                admin.set_password('Mody0325')
+                db.session.add(admin)
+                db.session.commit()
+                print("Admin user created successfully!")
+            else:
+                print("Admin user already exists!")
+        except Exception as e:
+            print(f"Error initializing database: {str(e)}")
+            raise
 
 if __name__ == '__main__':
     init_db() 
