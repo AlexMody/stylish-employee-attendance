@@ -7,54 +7,16 @@ from src.models.vacation import Vacation
 from src.models.db import db
 import datetime
 
-admin_bp = Blueprint('admin', __name__)
+bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-@admin_bp.route('/dashboard')
+@bp.route('/dashboard')
 @login_required
 def dashboard():
-    # Debugging prints for admin dashboard
-    print(f"--- Debugging Admin Dashboard ---")
-    print(f"Current user authenticated: {current_user.is_authenticated}")
-    print(f"Current user Is Admin: {current_user.is_admin}")
-    print(f"------------------------")
-
     if not current_user.is_admin:
-        flash('Unauthorized access', 'danger')
-        return redirect(url_for('employee.dashboard'))
-    
-    # Get all active employees (currently checked in)
-    today = datetime.date.today()
-    active_attendances = Attendance.query.filter(
-        Attendance.date == today,
-        Attendance.check_out_time == None
-    ).all()
-    
-    active_employee_ids = [attendance.user_id for attendance in active_attendances]
-    active_employees = User.query.filter(User.id.in_(active_employee_ids)).all() if active_employee_ids else []
-    
-    # Get employees who need leads
-    employees_needing_leads = User.query.filter_by(needs_lead=True, is_admin=False).all()
-    
-    # Get all employees
-    all_employees = User.query.filter_by(is_admin=False).all()
-    
-    # Get pending vacation requests
-    pending_vacations = Vacation.query.filter_by(status='pending').all()
-    
-    # Get bonus hunters this month
-    bonus_hunters = []
-    for employee in all_employees:
-        if employee.is_bonus_hunter():
-            bonus_hunters.append(employee)
-    
-    return render_template('admin/dashboard.html',
-                          active_employees=active_employees,
-                          employees_needing_leads=employees_needing_leads,
-                          all_employees=all_employees,
-                          pending_vacations=pending_vacations,
-                          bonus_hunters=bonus_hunters)
+        return redirect(url_for('main.index'))
+    return render_template('admin/dashboard.html')
 
-@admin_bp.route('/employees')
+@bp.route('/employees')
 @login_required
 def employees():
     if not current_user.is_admin:
@@ -64,7 +26,7 @@ def employees():
     employees = User.query.filter_by(is_admin=False).all()
     return render_template('admin/employees.html', employees=employees, datetime=datetime)
 
-@admin_bp.route('/add-employee', methods=['GET', 'POST'])
+@bp.route('/add-employee', methods=['GET', 'POST'])
 @login_required
 def add_employee():
     if not current_user.is_admin:
@@ -97,7 +59,7 @@ def add_employee():
     
     return render_template('admin/add_employee.html', datetime=datetime)
 
-@admin_bp.route('/edit-employee/<int:employee_id>', methods=['GET', 'POST'])
+@bp.route('/edit-employee/<int:employee_id>', methods=['GET', 'POST'])
 @login_required
 def edit_employee(employee_id):
     if not current_user.is_admin:
@@ -140,7 +102,7 @@ def edit_employee(employee_id):
     
     return render_template('admin/edit_employee.html', employee=employee, datetime=datetime)
 
-@admin_bp.route('/delete-employee/<int:employee_id>', methods=['POST'])
+@bp.route('/delete-employee/<int:employee_id>', methods=['POST'])
 @login_required
 def delete_employee(employee_id):
     if not current_user.is_admin:
@@ -159,7 +121,7 @@ def delete_employee(employee_id):
     flash('Employee deleted successfully', 'success')
     return redirect(url_for('admin.employees'))
 
-@admin_bp.route('/attendance-report')
+@bp.route('/attendance-report')
 @login_required
 def attendance_report():
     if not current_user.is_admin:
@@ -187,7 +149,7 @@ def attendance_report():
                           employees=employees,
                           date=date, datetime=datetime)
 
-@admin_bp.route('/sales-report')
+@bp.route('/sales-report')
 @login_required
 def sales_report():
     if not current_user.is_admin:
@@ -243,7 +205,7 @@ def sales_report():
                           month=month,
                           year=year, datetime=datetime)
 
-@admin_bp.route('/vacation-requests')
+@bp.route('/vacation-requests')
 @login_required
 def vacation_requests():
     if not current_user.is_admin:
@@ -255,7 +217,7 @@ def vacation_requests():
     
     return render_template('admin/vacation_requests.html', vacations=vacations, User=User, datetime=datetime)
 
-@admin_bp.route('/approve-vacation/<int:vacation_id>', methods=['POST'])
+@bp.route('/approve-vacation/<int:vacation_id>', methods=['POST'])
 @login_required
 def approve_vacation(vacation_id):
     if not current_user.is_admin:
@@ -269,7 +231,7 @@ def approve_vacation(vacation_id):
     flash('Vacation request approved', 'success')
     return redirect(url_for('admin.vacation_requests'))
 
-@admin_bp.route('/reject-vacation/<int:vacation_id>', methods=['POST'])
+@bp.route('/reject-vacation/<int:vacation_id>', methods=['POST'])
 @login_required
 def reject_vacation(vacation_id):
     if not current_user.is_admin:
@@ -283,7 +245,7 @@ def reject_vacation(vacation_id):
     flash('Vacation request rejected', 'success')
     return redirect(url_for('admin.vacation_requests'))
 
-@admin_bp.route('/live-attendance')
+@bp.route('/live-attendance')
 @login_required
 def live_attendance():
     if not current_user.is_admin:
@@ -292,7 +254,7 @@ def live_attendance():
     
     return render_template('admin/live_attendance.html', datetime=datetime)
 
-@admin_bp.route('/api/live-attendance')
+@bp.route('/api/live-attendance')
 @login_required
 def api_live_attendance():
     if not current_user.is_admin:

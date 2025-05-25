@@ -59,16 +59,15 @@ def not_found_error(error):
     return render_template('error.html', error="Page Not Found"), 404
 
 # Import and register blueprints
-from src.routes import auth, main, admin, employee
+from src.routes.auth import bp as auth_bp
+from src.routes.main import bp as main_bp
+from src.routes.admin import bp as admin_bp
+from src.routes.employee import bp as employee_bp
 
-app.register_blueprint(auth.bp)
-app.register_blueprint(main.bp)
-app.register_blueprint(admin.bp)
-app.register_blueprint(employee.bp)
-
-@app.route('/')
-def index():
-    return main.index()
+app.register_blueprint(auth_bp)
+app.register_blueprint(main_bp)
+app.register_blueprint(admin_bp)
+app.register_blueprint(employee_bp)
 
 # Create sample data for demonstration
 def create_sample_data():

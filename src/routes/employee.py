@@ -7,11 +7,14 @@ from src.models.vacation import Vacation
 from src.models.db import db
 import datetime
 
-employee_bp = Blueprint('employee', __name__)
+bp = Blueprint('employee', __name__, url_prefix='/employee')
 
-@employee_bp.route('/dashboard')
+@bp.route('/dashboard')
 @login_required
-def employee_dashboard():
+def dashboard():
+    if current_user.is_admin:
+        return redirect(url_for('admin.dashboard'))
+    
     # Get today's attendance record
     today = datetime.date.today()
     attendance = Attendance.query.filter_by(
@@ -40,7 +43,7 @@ def employee_dashboard():
                           is_bonus_hunter=is_bonus_hunter,
                           datetime=datetime)
 
-@employee_bp.route('/check-in', methods=['POST'])
+@bp.route('/check-in', methods=['POST'])
 @login_required
 def check_in():
     if current_user.is_admin:
@@ -63,9 +66,9 @@ def check_in():
         db.session.commit()
         flash('Checked in successfully', 'success')
     
-    return redirect(url_for('employee.employee_dashboard'))
+    return redirect(url_for('employee.dashboard'))
 
-@employee_bp.route('/check-out', methods=['POST'])
+@bp.route('/check-out', methods=['POST'])
 @login_required
 def check_out():
     if current_user.is_admin:
@@ -86,9 +89,9 @@ def check_out():
     else:
         flash('You are not checked in', 'warning')
     
-    return redirect(url_for('employee.employee_dashboard'))
+    return redirect(url_for('employee.dashboard'))
 
-@employee_bp.route('/toggle-lead-status', methods=['POST'])
+@bp.route('/toggle-lead-status', methods=['POST'])
 @login_required
 def toggle_lead_status():
     if current_user.is_admin:
@@ -105,9 +108,9 @@ def toggle_lead_status():
     status = 'requested' if current_user.needs_lead else 'canceled'
     flash(f'Lead request {status}', 'success')
     
-    return redirect(url_for('employee.employee_dashboard'))
+    return redirect(url_for('employee.dashboard'))
 
-@employee_bp.route('/record-sale', methods=['GET', 'POST'])
+@bp.route('/record-sale', methods=['GET', 'POST'])
 @login_required
 def record_sale():
     if current_user.is_admin:
@@ -146,11 +149,11 @@ def record_sale():
         if monthly_sales == 5:  # Just reached 5 sales
             flash('Congratulations! You are now a Bonus Hunter for this month!', 'success')
         
-        return redirect(url_for('employee.employee_dashboard'))
+        return redirect(url_for('employee.dashboard'))
     
     return render_template('employee/record_sale.html', datetime=datetime)
 
-@employee_bp.route('/request-vacation', methods=['GET', 'POST'])
+@bp.route('/request-vacation', methods=['GET', 'POST'])
 @login_required
 def request_vacation():
     if current_user.is_admin:
@@ -188,6 +191,6 @@ def request_vacation():
         db.session.commit()
         
         flash('Vacation request submitted successfully', 'success')
-        return redirect(url_for('employee.employee_dashboard'))
+        return redirect(url_for('employee.dashboard'))
     
     return render_template('employee/request_vacation.html', datetime=datetime)

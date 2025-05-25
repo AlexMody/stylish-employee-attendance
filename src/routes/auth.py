@@ -4,9 +4,9 @@ from src.models.user import User
 from src.models.db import db
 from werkzeug.security import generate_password_hash
 
-auth_bp = Blueprint('auth', __name__)
+bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         if current_user.is_admin:
@@ -36,13 +36,13 @@ def login():
     
     return render_template('auth/login.html')
 
-@auth_bp.route('/logout')
+@bp.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
 
-@auth_bp.route('/create_admin', methods=['GET', 'POST'])
+@bp.route('/create_admin', methods=['GET', 'POST'])
 def create_admin():
     # Check if any admin exists
     admin_exists = User.query.filter_by(is_admin=True).first() is not None
