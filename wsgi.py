@@ -6,6 +6,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.routes.main import app
 from src.models.db import db
+from flask_migrate import Migrate
+
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
 
 # Initialize database
 with app.app_context():
