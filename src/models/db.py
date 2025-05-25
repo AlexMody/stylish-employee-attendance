@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 import os
+import logging
 
 db = SQLAlchemy()
 
@@ -17,5 +18,14 @@ def init_db(app):
     
     # Initialize the database
     db.init_app(app)
+    
+    # Create tables
+    with app.app_context():
+        try:
+            db.create_all()
+            app.logger.info("Database tables created successfully!")
+        except Exception as e:
+            app.logger.error(f"Error creating database tables: {str(e)}")
+            raise
     
     return db

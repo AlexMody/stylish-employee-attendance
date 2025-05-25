@@ -1,19 +1,14 @@
 {% extends "base.html" %}
 
+{% block title %}Error{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0">Error</h4>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ error }}</h5>
-                    <p class="card-text">We apologize for the inconvenience. Please try again later or contact support if the problem persists.</p>
-                    <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Home</a>
-                </div>
-            </div>
+        <div class="col-md-6 text-center">
+            <h1 class="display-4 text-danger">Error</h1>
+            <p class="lead">{{ error }}</p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return to Home</a>
         </div>
     </div>
 </div>

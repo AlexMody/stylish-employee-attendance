@@ -7,6 +7,7 @@ services:
       export FLASK_APP=wsgi.py
       export PYTHONPATH=/opt/render/project/src
       export DATABASE_URL=${DATABASE_URL}
+      export FLASK_ENV=production
       flask db init
       flask db migrate -m "Initial migration"
       flask db upgrade
