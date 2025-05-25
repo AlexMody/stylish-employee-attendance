@@ -9,7 +9,11 @@ from src.models.db import db
 
 # Initialize database
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        print("Database tables created successfully!")
+    except Exception as e:
+        print(f"Error creating database tables: {str(e)}")
 
 if __name__ == "__main__":
     app.run() 

@@ -19,6 +19,8 @@ services:
         value: 10000
       - key: PYTHONPATH
         value: /opt/render/project/src
+      - key: FLASK_APP
+        value: wsgi.py
     autoDeploy: true
     healthCheckPath: /
     disk:

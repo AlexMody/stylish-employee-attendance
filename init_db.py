@@ -1,10 +1,16 @@
 from src.routes.main import app
 from src.models.db import db
 from src.models.user import User
+from src.models.attendance import Attendance
+from src.models.sale import Sale
+from src.models.vacation import Vacation
 import os
 
 def init_db():
     with app.app_context():
+        # Drop all tables first to ensure clean state
+        db.drop_all()
+        
         # Create all tables
         db.create_all()
         
