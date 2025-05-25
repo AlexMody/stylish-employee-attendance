@@ -1,8 +1,11 @@
 from flask_migrate import Migrate
 from src.routes.main import app
-from src.models.db import db
+from src.models.db import db, init_db
 from src.models.user import User
 import os
+
+# Initialize database
+init_db(app)
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)

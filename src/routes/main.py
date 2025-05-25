@@ -9,7 +9,7 @@ from flask_login import LoginManager, current_user
 import datetime
 import json
 
-from src.models.db import db
+from src.models.db import db, init_db
 from src.models.user import User
 from src.models.attendance import Attendance
 from src.models.sale import Sale
@@ -23,6 +23,7 @@ app = Flask(__name__,
 
 # Load configuration
 app.config.from_object(Config)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
 
 # Set up logging
 if not app.debug:
@@ -36,7 +37,7 @@ if not app.debug:
     app.logger.info('Attendance System startup')
 
 # Initialize database with app
-db.init_app(app)
+init_db(app)
 
 # Initialize login manager
 login_manager = LoginManager(app)
@@ -58,19 +59,16 @@ def not_found_error(error):
     return render_template('error.html', error="Page Not Found"), 404
 
 # Import and register blueprints
-from src.routes.auth import auth_bp
-from src.routes.employee import employee_bp
-from src.routes.admin import admin_bp
-from src.routes.api import api_bp
+from src.routes import auth, main, admin, employee
 
-app.register_blueprint(auth_bp)
-app.register_blueprint(employee_bp, url_prefix='/employee')
-app.register_blueprint(admin_bp, url_prefix='/admin')
-app.register_blueprint(api_bp, url_prefix='/api')
+app.register_blueprint(auth.bp)
+app.register_blueprint(main.bp)
+app.register_blueprint(admin.bp)
+app.register_blueprint(employee.bp)
 
 @app.route('/')
 def index():
-    return redirect(url_for('auth.login'))
+    return main.index()
 
 # Create sample data for demonstration
 def create_sample_data():
